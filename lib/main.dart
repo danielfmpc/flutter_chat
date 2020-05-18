@@ -6,6 +6,12 @@ void main() {
     MaterialApp(
       home: Home(),
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        iconTheme: IconThemeData(
+          color: Colors.blue
+        )
+      ),
     )
   );
 }
