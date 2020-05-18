@@ -1,4 +1,5 @@
 import 'package:chat/components/text_composer.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class Home extends StatefulWidget {
@@ -7,6 +8,13 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+
+  void _sendMessage(String text){
+    Firestore.instance.collection("message").add({
+      "text": text
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,7 +29,7 @@ class _HomeState extends State<Home> {
           ),          
         ],
       ),
-      body: TextComposer(),
+      body: TextComposer(_sendMessage),
     );
   }
 }
