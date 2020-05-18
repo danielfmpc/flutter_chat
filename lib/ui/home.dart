@@ -15,8 +15,19 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
 
   final GoogleSignIn googleSignIn = GoogleSignIn();
+  final GlobalKey<ScaffoldState> _globalKey = GlobalKey();
+  FirebaseUser _currentUser;
 
-  void _getUser() async {
+  @override
+  void initState() {
+    super.initState();
+    FirebaseAuth.instance.onAuthStateChanged.listen((user) {
+      _currentUser = user;
+    });
+  }
+
+  Future<FirebaseUser> _getUser() async {
+    if(_currentUser != null) return _currentUser;
     try {
       final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
       final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
@@ -26,11 +37,22 @@ class _HomeState extends State<Home> {
       );
       final AuthResult authResult = await FirebaseAuth.instance.signInWithCredential(credential);
       final FirebaseUser user = authResult.user;
+      return user;
     } catch (error) {
     }
   }
 
   void _sendMessage({String text, File imgFile}) async {
+    final FirebaseUser user = await _getUser();
+
+    if(user == null) {
+      _globalKey.currentState.showSnackBar(
+        SnackBar(
+          content: Text("Não foi possivel fazer login"),
+          backgroundColor: Colors.red,
+        )
+      );
+    }
 
     Map<String, dynamic> data = {};
 
@@ -53,6 +75,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _globalKey,
       appBar: AppBar(
         title: Text("Ola, Daniel"),
         elevation: 0,
