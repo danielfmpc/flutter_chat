@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:chat/components/text_composer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -11,6 +13,22 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+
+  final GoogleSignIn googleSignIn = GoogleSignIn();
+
+  void _getUser() async {
+    try {
+      final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
+      final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
+      final AuthCredential credential = GoogleAuthProvider.getCredential(
+        idToken: googleSignInAuthentication.idToken, 
+        accessToken: googleSignInAuthentication.accessToken
+      );
+      final AuthResult authResult = await FirebaseAuth.instance.signInWithCredential(credential);
+      final FirebaseUser user = authResult.user;
+    } catch (error) {
+    }
+  }
 
   void _sendMessage({String text, File imgFile}) async {
 
