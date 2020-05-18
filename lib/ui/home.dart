@@ -17,13 +17,17 @@ class _HomeState extends State<Home> {
 
   final GoogleSignIn googleSignIn = GoogleSignIn();
   final GlobalKey<ScaffoldState> _globalKey = GlobalKey();
+  bool _isLoading = false;
+  
   FirebaseUser _currentUser;
 
   @override
   void initState() {
     super.initState();
     FirebaseAuth.instance.onAuthStateChanged.listen((user) {
-      _currentUser = user;
+      setState(() {
+        _currentUser = user;
+      });
     });
   }
 
@@ -40,7 +44,7 @@ class _HomeState extends State<Home> {
       final FirebaseUser user = authResult.user;
       return user;
     } catch (error) {
-      return error;
+      return null;
     }
   }
 
@@ -50,32 +54,41 @@ class _HomeState extends State<Home> {
     if(user == null) {
       _globalKey.currentState.showSnackBar(
         SnackBar(
-          content: Text("Não foi possivel fazer login"),
+          content: Text('Não foi possivel fazer login'),
           backgroundColor: Colors.red,
         )
       );
     }
 
     Map<String, dynamic> data = {
-      "uid": user.uid,
-      "senderName": user.displayName,
-      "senderPhotoUrl": user.photoUrl
+      'uid': user.uid,
+      'senderName': user.displayName,
+      'senderPhotoUrl': user.photoUrl,
+      'time': Timestamp.now()
     };
 
     if(imgFile != null){
       StorageUploadTask task = FirebaseStorage.instance.ref().child(
-        DateTime.now().millisecondsSinceEpoch.toString(),
+        user.uid + DateTime.now().millisecondsSinceEpoch.toString(),
       ).putFile(imgFile);
+
+      setState(() {
+        _isLoading = true;
+      });
 
       StorageTaskSnapshot taskSnapshot = await task.onComplete;
 
       String url = await taskSnapshot.ref.getDownloadURL();
-      data["imgFIle"] = url;
+      data['imgFile'] = url;
+
+      setState(() {
+        _isLoading = false;
+      });
     }
 
-    if(text != null) data["text"] = text;
+    if(text != null) data['text'] = text;
 
-    Firestore.instance.collection("message").add(data);
+    Firestore.instance.collection('message').add(data);
   }
 
   @override
@@ -83,13 +96,27 @@ class _HomeState extends State<Home> {
     return Scaffold(
       key: _globalKey,
       appBar: AppBar(
-        title: Text("Ola, Daniel"),
+        title: Text(
+          _currentUser != null ? 'olá, ${_currentUser.displayName}' : 'Chat online'
+        ),
         elevation: 0,
         centerTitle: true,
         actions: <Widget>[
           Padding(
             padding: EdgeInsets.only(right: 10),
-            child: Icon(Icons.exit_to_app),
+            child: _currentUser != null ? IconButton(
+              icon: Icon(Icons.exit_to_app),
+              onPressed: (){
+                FirebaseAuth.instance.signOut();
+                googleSignIn.signOut();
+                 _globalKey.currentState.showSnackBar(
+                  SnackBar(
+                    content: Text('Você saiu com sucesso'),
+                    backgroundColor: Colors.red,
+                  )
+                );
+              },
+            ) : Container() 
           ),          
         ],
       ),
@@ -97,7 +124,7 @@ class _HomeState extends State<Home> {
         children: <Widget>[
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: Firestore.instance.collection("message").snapshots(),
+              stream: Firestore.instance.collection('message').orderBy('time').snapshots(),
               builder: (context, snapshot){
                 switch (snapshot.connectionState) {
                   case ConnectionState.done:
@@ -112,13 +139,16 @@ class _HomeState extends State<Home> {
                       itemCount: documents.length,
                       reverse: true,
                       itemBuilder: (context, index){
-                        return ChatMessage(documents[index].data);
+                        return ChatMessage(documents[index].data, 
+                          documents[index].data['uid'] == _currentUser?.uid
+                        );
                       },
                     );
                 }
               },
             ),
           ),
+          _isLoading ? LinearProgressIndicator():Container(),
           TextComposer(_sendMessage),
         ],
       ),
