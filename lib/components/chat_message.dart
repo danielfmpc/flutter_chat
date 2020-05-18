@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 class ChatMessage extends StatelessWidget {
 
-  ChatMessage(this.data);
+  ChatMessage(this.data, this.mine);
 
   final Map<String, dynamic> data;
+  bool mine;
 
   @override
   Widget build(BuildContext context) {
@@ -12,31 +13,46 @@ class ChatMessage extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       child: Row(
         children: <Widget>[
-          CircleAvatar(
-            backgroundImage: NetworkImage(data['senderPhotoUrl']),
-          ),
+          !mine ?
+          Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: CircleAvatar(
+              backgroundImage: NetworkImage(data['senderPhotoUrl']),
+            ),
+          ): Container(),
           Expanded(
             child: Column(
+              crossAxisAlignment: mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: <Widget>[
-                data['imgFile'] != null ?
-                  Image.network(data['imgFile'])
-                :
-                  Text(
-                    data['text'],
-                    style: TextStyle(
-                      fontSize: 16
-                    )
-                  ),
                 Text(
                   data['senderName'],
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 10,
                     fontWeight: FontWeight.w500
+                    
                   ),
                 ),
+                data['imgFile'] != null ?
+                  Image.network(data['imgFile'], width: 250,)
+                :
+                  Text(
+                    data['text'],
+                    textAlign: mine ? TextAlign.end : TextAlign.start,                    
+                    style: TextStyle(
+                      fontSize: 18,
+                    )
+                  ),
+                
               ],
             ),
-          )
+          ),
+          mine ?
+          Padding(
+            padding: EdgeInsets.only(left: 16),
+            child: CircleAvatar(
+              backgroundImage: NetworkImage(data['senderPhotoUrl']),
+            ),
+          ): Container(),
         ],
       ),
     );
