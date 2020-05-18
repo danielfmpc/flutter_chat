@@ -41,6 +41,8 @@ class _TextComposerState extends State<TextComposer> {
           ),
           Expanded(
             child: TextField(
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
               controller: _controller,
               decoration: InputDecoration.collapsed(hintText: "Digite sua mensagem"),
               onChanged: (text){
