@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:chat/components/chat_message.dart';
 import 'package:chat/components/text_composer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -39,6 +40,7 @@ class _HomeState extends State<Home> {
       final FirebaseUser user = authResult.user;
       return user;
     } catch (error) {
+      return error;
     }
   }
 
@@ -54,7 +56,11 @@ class _HomeState extends State<Home> {
       );
     }
 
-    Map<String, dynamic> data = {};
+    Map<String, dynamic> data = {
+      "uid": user.uid,
+      "senderName": user.displayName,
+      "senderPhotoUrl": user.photoUrl
+    };
 
     if(imgFile != null){
       StorageUploadTask task = FirebaseStorage.instance.ref().child(
@@ -106,9 +112,7 @@ class _HomeState extends State<Home> {
                       itemCount: documents.length,
                       reverse: true,
                       itemBuilder: (context, index){
-                        return ListTile(
-                          title: Text(documents[index].data["text"]),
-                        );
+                        return ChatMessage(documents[index].data);
                       },
                     );
                 }
